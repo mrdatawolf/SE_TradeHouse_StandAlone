@@ -1,0 +1,22 @@
+# Note: config.js is NOT ignored because:
+# - We're using CSV mode (no API keys)
+# - Google Sheet is public
+# - Sheet ID is not sensitive
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+
+# Python cache
+__pycache__/
+*.pyc

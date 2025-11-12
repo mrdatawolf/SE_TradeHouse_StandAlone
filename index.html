@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SE TradeHouse - Standalone</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <header class="header">
+      <h1>SE TradeHouse</h1>
+      <p class="subtitle">Space Engineers Trade Data</p>
+      <div class="header-info">
+        <span id="last-update">Loading...</span>
+        <button id="refresh-btn" class="btn btn-primary">Refresh Data</button>
+      </div>
+    </header>
+
+    <!-- Controls -->
+    <div class="controls">
+      <!-- Search -->
+      <div class="control-group">
+        <input
+          type="text"
+          id="search-input"
+          placeholder="Search items, stores, or owners..."
+          class="search-input"
+        >
+      </div>
+
+      <!-- Filters -->
+      <div class="control-group">
+        <label for="good-type-filter">Good Type:</label>
+        <select id="good-type-filter" class="filter-select">
+          <option value="all">All Types</option>
+          <option value="Ore">Ores</option>
+          <option value="Ingot">Ingots</option>
+          <option value="Component">Components</option>
+          <option value="Tool">Tools</option>
+          <option value="Ammo">Ammo</option>
+          <option value="Bottle">Bottles</option>
+        </select>
+      </div>
+
+      <div class="control-group">
+        <label for="transaction-filter">Show:</label>
+        <select id="transaction-filter" class="filter-select">
+          <option value="all">All Transactions</option>
+          <option value="buy">Buy Orders Only</option>
+          <option value="sell">Sell Offers Only</option>
+          <option value="profitable">Profitable Only</option>
+        </select>
+      </div>
+
+      <div class="control-group">
+        <label for="sort-select">Sort By:</label>
+        <select id="sort-select" class="filter-select">
+          <option value="profit">Best Profit</option>
+          <option value="price-asc">Price (Low to High)</option>
+          <option value="price-desc">Price (High to Low)</option>
+          <option value="quantity">Quantity</option>
+          <option value="item">Item Name</option>
+          <option value="store">Store Name</option>
+        </select>
+      </div>
+
+      <div class="control-group">
+        <label>
+          <input type="checkbox" id="show-stats-toggle" checked>
+          Show Statistics
+        </label>
+      </div>
+    </div>
+
+    <!-- Statistics -->
+    <div id="stats-panel" class="stats-panel">
+      <div class="stat-card">
+        <h3>Total Stores</h3>
+        <p id="stat-stores" class="stat-value">0</p>
+      </div>
+      <div class="stat-card">
+        <h3>Active Transactions</h3>
+        <p id="stat-transactions" class="stat-value">0</p>
+      </div>
+      <div class="stat-card">
+        <h3>Unique Items</h3>
+        <p id="stat-items" class="stat-value">0</p>
+      </div>
+      <div class="stat-card">
+        <h3>Best Profit</h3>
+        <p id="stat-best-profit" class="stat-value">0</p>
+      </div>
+    </div>
+
+    <!-- Loading State -->
+    <div id="loading" class="loading">
+      <div class="spinner"></div>
+      <p>Loading trade data...</p>
+    </div>
+
+    <!-- Error State -->
+    <div id="error" class="error hidden">
+      <p id="error-message"></p>
+      <button id="retry-btn" class="btn btn-secondary">Retry</button>
+    </div>
+
+    <!-- Main Content -->
+    <main id="main-content" class="main-content hidden">
+      <!-- Tabs for Store Views -->
+      <div class="tabs">
+        <button class="tab-btn active" data-view="stores">Store View</button>
+        <button class="tab-btn" data-view="items">Item View</button>
+      </div>
+
+      <!-- Store View -->
+      <div id="store-view" class="view-container active">
+        <div id="stores-container" class="stores-container">
+          <!-- Stores will be dynamically generated here -->
+        </div>
+      </div>
+
+      <!-- Item View -->
+      <div id="item-view" class="view-container">
+        <div id="items-container" class="items-container">
+          <!-- Items will be dynamically generated here -->
+        </div>
+      </div>
+
+      <!-- No Results -->
+      <div id="no-results" class="no-results hidden">
+        <p>No transactions found matching your criteria.</p>
+      </div>
+    </main>
+  </div>
+
+  <!-- Scripts -->
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
