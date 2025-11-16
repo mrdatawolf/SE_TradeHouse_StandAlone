@@ -534,6 +534,26 @@ body {
   }
 }
 
+/* User Distance Styling */
+.user-distance-row {
+  background: linear-gradient(135deg, #d4fc79 0%, #96e6a1 100%);
+  border-left: 3px solid #48bb78;
+  padding: 8px 12px !important;
+  margin: 5px -12px;
+  border-radius: 5px;
+}
+
+.user-distance-row .label {
+  color: #22543d;
+  font-weight: 600;
+}
+
+.user-distance-row .user-distance {
+  color: #22543d;
+  font-weight: 700;
+  font-size: 14px;
+}
+
 /* Print Styles */
 @media print {
   .header-info,

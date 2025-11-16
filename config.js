@@ -18,7 +18,7 @@ const CONFIG = {
   SHEET_NAME: 'Sheet1',
 
   // Good types for filtering
-  GOOD_TYPES: ['Ore', 'Ingot', 'Component', 'Tool', 'Ammo', 'Bottle'],
+  GOOD_TYPES: ['Ore', 'Ingot', 'Component', 'Tool', 'Ammo', 'Bottle', 'Consumable'],
 
   // Transaction types mapping
   TRANSACTION_TYPES: {

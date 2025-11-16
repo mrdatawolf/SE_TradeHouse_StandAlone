@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SE Item Parsing Test</title>
+  <link rel="stylesheet" href="nav.css">
+  <style>
+    body { font-family: monospace; padding: 0; background: #f5f5f5; }
+    .content { padding: 20px; max-width: 1200px; margin: 0 auto; }
+    h1 { color: #333; margin-bottom: 20px; }
+    .test-case { margin: 10px 0; padding: 10px; background: #f0f0f0; border-radius: 5px; }
+    .pass { background: #d4edda; }
+    .fail { background: #f8d7da; }
+  </style>
+</head>
+<body>
+  <div class="content">
+    <h1>Space Engineers Item Parsing Tests</h1>
+  <div id="results"></div>
+
+  <script>
+    // Copy the parsing functions from app.js
+    function parseItemNameAndType(itemValue, typeValue) {
+      if (itemValue.includes('MyObjectBuilder_')) {
+        const correctedItem = correctSeNameIssues(itemValue);
+        const parts = correctedItem.split('/');
+
+        if (parts.length >= 2) {
+          const seType = parts[0];
+          const itemName = parts[1];
+          const goodType = seNameToGoodType(seType, itemName);
+
+          return {
+            name: itemName,
+            type: goodType
+          };
+        }
+      }
+
+      return {
+        name: itemValue,
+        type: typeValue || 'Unknown'
+      };
+    }
+
+    function seNameToGoodType(seType, itemName) {
+      const specialTools = [
+        'WelderItem', 'Welder2Item', 'Welder3Item', 'Welder4Item',
+        'Welder', 'Welder2', 'Welder3', 'Welder4',
+        'AngleGrinderItem', 'AngleGrinder2Item', 'AngleGrinder3Item', 'AngleGrinder4Item',
+        'AngleGrinder', 'AngleGrinder2', 'AngleGrinder3', 'AngleGrinder4',
+        'HandDrillItem', 'HandDrill2Item', 'HandDrill3Item', 'HandDrill4Item',
+        'HandDrill', 'HandDrill2', 'HandDrill3', 'HandDrill4',
+        'AutomaticRifleItem', 'RapidFireAutomaticRifleItem', 'PreciseAutomaticRifleItem', 'UltimateAutomaticRifleItem',
+        'AutomaticRifle', 'RapidFireAutomaticRifle', 'PreciseAutomaticRifle', 'UltimateAutomaticRifle'
+      ];
+
+      switch (seType) {
+        case 'MyObjectBuilder_Ingot':
+          return 'Ingot';
+        case 'MyObjectBuilder_Ore':
+          return 'Ore';
+        case 'MyObjectBuilder_Component':
+          return 'Component';
+        case 'MyObjectBuilder_ConsumableItem':
+          return 'Consumable';
+        case 'MyObjectBuilder_AmmoMagazine':
+        case 'MyObjectBuilder_PhysicalGunObject':
+          return specialTools.includes(itemName) ? 'Tool' : 'Ammo';
+        case 'MyObjectBuilder_GasContainerObject':
+        case 'MyObjectBuilder_OxygenContainerObject':
+          return 'Bottle';
+        default:
+          return 'Tool';
+      }
+    }
+
+    function correctSeNameIssues(seName) {
+      const corrections = {
+        'MyObjectBuilder_PhysicalGunObject/AutomaticRifleItem': 'MyObjectBuilder_PhysicalGunObject/AutomaticRifle',
+        'MyObjectBuilder_AmmoMagazine/NATO_25x184mmMagazine': 'MyObjectBuilder_AmmoMagazine/NATO_25x184mm',
+        'MyObjectBuilder_AmmoMagazine/Missile200mmMagazine': 'MyObjectBuilder_AmmoMagazine/Missile200mm'
+      };
+
+      return corrections[seName] || seName;
+    }
+
+    // Test cases
+    const tests = [
+      { input: 'MyObjectBuilder_Ingot/Uranium', expected: { name: 'Uranium', type: 'Ingot' } },
+      { input: 'MyObjectBuilder_Ore/Iron', expected: { name: 'Iron', type: 'Ore' } },
+      { input: 'MyObjectBuilder_Component/SteelPlate', expected: { name: 'SteelPlate', type: 'Component' } },
+      { input: 'MyObjectBuilder_PhysicalGunObject/WelderItem', expected: { name: 'WelderItem', type: 'Tool' } },
+      { input: 'MyObjectBuilder_PhysicalGunObject/AngleGrinderItem', expected: { name: 'AngleGrinderItem', type: 'Tool' } },
+      { input: 'MyObjectBuilder_AmmoMagazine/NATO_5p56x45mmNATOMagazine', expected: { name: 'NATO_5p56x45mmNATOMagazine', type: 'Ammo' } },
+      { input: 'MyObjectBuilder_OxygenContainerObject/OxygenBottle', expected: { name: 'OxygenBottle', type: 'Bottle' } },
+      { input: 'MyObjectBuilder_GasContainerObject/HydrogenBottle', expected: { name: 'HydrogenBottle', type: 'Bottle' } },
+      { input: 'MyObjectBuilder_PhysicalGunObject/AutomaticRifleItem', expected: { name: 'AutomaticRifle', type: 'Tool' } }, // Should correct the name
+      { input: 'MyObjectBuilder_ConsumableItem/InsectMeatRaw', expected: { name: 'InsectMeatRaw', type: 'Consumable' } }, // New: Consumable type
+      { input: 'Steel', typeColumn: 'Ingot', expected: { name: 'Steel', type: 'Ingot' } }, // Plain format
+    ];
+
+    // Run tests
+    const resultsDiv = document.getElementById('results');
+    let passed = 0;
+    let failed = 0;
+
+    tests.forEach((test, index) => {
+      const result = parseItemNameAndType(test.input, test.typeColumn || '');
+      const isPass = result.name === test.expected.name && result.type === test.expected.type;
+
+      if (isPass) passed++;
+      else failed++;
+
+      const testDiv = document.createElement('div');
+      testDiv.className = `test-case ${isPass ? 'pass' : 'fail'}`;
+      testDiv.innerHTML = `
+        <strong>Test ${index + 1}: ${isPass ? 'PASS' : 'FAIL'}</strong><br>
+        Input: ${test.input}${test.typeColumn ? ` (Type: ${test.typeColumn})` : ''}<br>
+        Expected: name="${test.expected.name}", type="${test.expected.type}"<br>
+        Got: name="${result.name}", type="${result.type}"
+      `;
+      resultsDiv.appendChild(testDiv);
+    });
+
+    // Summary
+    const summaryDiv = document.createElement('div');
+    summaryDiv.style.marginTop = '20px';
+    summaryDiv.style.padding = '15px';
+    summaryDiv.style.background = passed === tests.length ? '#d4edda' : '#fff3cd';
+    summaryDiv.innerHTML = `<strong>Summary: ${passed} passed, ${failed} failed out of ${tests.length} tests</strong>`;
+    resultsDiv.appendChild(summaryDiv);
+  </script>
+  </div>
+  <script src="nav.js"></script>
+</body>
+</html>
