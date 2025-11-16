@@ -25,52 +25,91 @@ class SETradeHouse {
   // Bind UI event listeners
   bindEvents() {
     // Refresh button
-    document.getElementById('refresh-btn').addEventListener('click', () => {
-      this.loadData();
+    const refreshBtn = document.getElementById('refresh-btn');
+    if (refreshBtn) {
+      refreshBtn.addEventListener('click', () => {
+        this.loadData();
+      });
+    }
+
+    // GPS update listener - re-render to show distances
+    window.addEventListener('gpsUpdated', () => {
+      if (this.transactions.length > 0) {
+        this.render();
+      }
+    });
+
+    window.addEventListener('gpsCleared', () => {
+      if (this.transactions.length > 0) {
+        this.render();
+      }
     });
 
     // Retry button
-    document.getElementById('retry-btn').addEventListener('click', () => {
-      this.loadData();
-    });
+    const retryBtn = document.getElementById('retry-btn');
+    if (retryBtn) {
+      retryBtn.addEventListener('click', () => {
+        this.loadData();
+      });
+    }
 
     // Search input
-    document.getElementById('search-input').addEventListener('input', (e) => {
-      this.filters.search = e.target.value.toLowerCase();
-      this.applyFiltersAndRender();
-    });
+    const searchInput = document.getElementById('search-input');
+    if (searchInput) {
+      searchInput.addEventListener('input', (e) => {
+        this.filters.search = e.target.value.toLowerCase();
+        this.applyFiltersAndRender();
+      });
+    }
 
     // Good type filter
-    document.getElementById('good-type-filter').addEventListener('change', (e) => {
-      this.filters.goodType = e.target.value;
-      this.applyFiltersAndRender();
-    });
+    const goodTypeFilter = document.getElementById('good-type-filter');
+    if (goodTypeFilter) {
+      goodTypeFilter.addEventListener('change', (e) => {
+        this.filters.goodType = e.target.value;
+        this.applyFiltersAndRender();
+      });
+    }
 
     // Transaction filter
-    document.getElementById('transaction-filter').addEventListener('change', (e) => {
-      this.filters.transactionType = e.target.value;
-      this.applyFiltersAndRender();
-    });
+    const transactionFilter = document.getElementById('transaction-filter');
+    if (transactionFilter) {
+      transactionFilter.addEventListener('change', (e) => {
+        this.filters.transactionType = e.target.value;
+        this.applyFiltersAndRender();
+      });
+    }
 
     // Sort select
-    document.getElementById('sort-select').addEventListener('change', (e) => {
-      this.filters.sortBy = e.target.value;
-      this.applyFiltersAndRender();
-    });
+    const sortSelect = document.getElementById('sort-select');
+    if (sortSelect) {
+      sortSelect.addEventListener('change', (e) => {
+        this.filters.sortBy = e.target.value;
+        this.applyFiltersAndRender();
+      });
+    }
 
     // Show stats toggle
-    document.getElementById('show-stats-toggle').addEventListener('change', (e) => {
-      const statsPanel = document.getElementById('stats-panel');
-      statsPanel.style.display = e.target.checked ? 'grid' : 'none';
-    });
+    const showStatsToggle = document.getElementById('show-stats-toggle');
+    if (showStatsToggle) {
+      showStatsToggle.addEventListener('change', (e) => {
+        const statsPanel = document.getElementById('stats-panel');
+        if (statsPanel) {
+          statsPanel.style.display = e.target.checked ? 'grid' : 'none';
+        }
+      });
+    }
 
     // Tab buttons
-    document.querySelectorAll('.tab-btn').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        const view = e.target.dataset.view;
-        this.switchView(view);
+    const tabBtns = document.querySelectorAll('.tab-btn');
+    if (tabBtns.length > 0) {
+      tabBtns.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const view = e.target.dataset.view;
+          this.switchView(view);
+        });
       });
-    });
+    }
   }
 
   // Load data from Google Sheets
@@ -222,10 +261,16 @@ class SETradeHouse {
       const gpsString = row[colIndices.gps] || '';
       const coords = this.parseGPS(gpsString);
 
+      // Parse item name and type (supports both formats)
+      const itemData = this.parseItemNameAndType(
+        row[colIndices.item] || 'Unknown',
+        row[colIndices.type] || ''
+      );
+
       const transaction = {
         id: row[colIndices.uniqueId] || `${i}`,
-        goodName: row[colIndices.item] || 'Unknown',
-        goodType: row[colIndices.type] || 'Unknown',
+        goodName: itemData.name,
+        goodType: itemData.type,
         quantity: parseInt(row[colIndices.quantity]) || 0,
         price: parseFloat(row[colIndices.price]) || 0,
         transactionType: transactionType,
@@ -242,6 +287,81 @@ class SETradeHouse {
     }
 
     return transactions;
+  }
+
+  // Parse item name and type from Space Engineers format or plain format
+  // Handles: "MyObjectBuilder_Ingot/Uranium" -> {name: "Uranium", type: "Ingot"}
+  // Also handles: plain name with separate type column
+  parseItemNameAndType(itemValue, typeValue) {
+    // Check if item is in Space Engineers format (MyObjectBuilder_Type/ItemName)
+    if (itemValue.includes('MyObjectBuilder_')) {
+      const correctedItem = this.correctSeNameIssues(itemValue);
+      const parts = correctedItem.split('/');
+
+      if (parts.length >= 2) {
+        const seType = parts[0]; // e.g., "MyObjectBuilder_Ingot"
+        const itemName = parts[1]; // e.g., "Uranium"
+        const goodType = this.seNameToGoodType(seType, itemName);
+
+        return {
+          name: itemName,
+          type: goodType
+        };
+      }
+    }
+
+    // Fallback to plain format
+    return {
+      name: itemValue,
+      type: typeValue || 'Unknown'
+    };
+  }
+
+  // Convert Space Engineers type prefix to good type
+  seNameToGoodType(seType, itemName) {
+    // Special tool items that have PhysicalGunObject prefix but are tools
+    // Note: Check both with and without "Item" suffix due to SE API inconsistencies
+    const specialTools = [
+      'WelderItem', 'Welder2Item', 'Welder3Item', 'Welder4Item',
+      'Welder', 'Welder2', 'Welder3', 'Welder4',
+      'AngleGrinderItem', 'AngleGrinder2Item', 'AngleGrinder3Item', 'AngleGrinder4Item',
+      'AngleGrinder', 'AngleGrinder2', 'AngleGrinder3', 'AngleGrinder4',
+      'HandDrillItem', 'HandDrill2Item', 'HandDrill3Item', 'HandDrill4Item',
+      'HandDrill', 'HandDrill2', 'HandDrill3', 'HandDrill4',
+      'AutomaticRifleItem', 'RapidFireAutomaticRifleItem', 'PreciseAutomaticRifleItem', 'UltimateAutomaticRifleItem',
+      'AutomaticRifle', 'RapidFireAutomaticRifle', 'PreciseAutomaticRifle', 'UltimateAutomaticRifle'
+    ];
+
+    switch (seType) {
+      case 'MyObjectBuilder_Ingot':
+        return 'Ingot';
+      case 'MyObjectBuilder_Ore':
+        return 'Ore';
+      case 'MyObjectBuilder_Component':
+        return 'Component';
+      case 'MyObjectBuilder_ConsumableItem':
+        return 'Consumable';
+      case 'MyObjectBuilder_AmmoMagazine':
+      case 'MyObjectBuilder_PhysicalGunObject':
+        // Check if it's a special tool item
+        return specialTools.includes(itemName) ? 'Tool' : 'Ammo';
+      case 'MyObjectBuilder_GasContainerObject':
+      case 'MyObjectBuilder_OxygenContainerObject':
+        return 'Bottle';
+      default:
+        return 'Tool';
+    }
+  }
+
+  // Correct known Space Engineers API naming inconsistencies
+  correctSeNameIssues(seName) {
+    const corrections = {
+      'MyObjectBuilder_PhysicalGunObject/AutomaticRifleItem': 'MyObjectBuilder_PhysicalGunObject/AutomaticRifle',
+      'MyObjectBuilder_AmmoMagazine/NATO_25x184mmMagazine': 'MyObjectBuilder_AmmoMagazine/NATO_25x184mm',
+      'MyObjectBuilder_AmmoMagazine/Missile200mmMagazine': 'MyObjectBuilder_AmmoMagazine/Missile200mm'
+    };
+
+    return corrections[seName] || seName;
   }
 
   // Find column index by trying multiple possible names
@@ -467,26 +587,45 @@ class SETradeHouse {
 
   // Update statistics panel
   updateStatistics() {
+    const statStores = document.getElementById('stat-stores');
+    const statTransactions = document.getElementById('stat-transactions');
+    const statItems = document.getElementById('stat-items');
+    const statBestProfit = document.getElementById('stat-best-profit');
+
+    // If elements don't exist (e.g., in test environment), skip updating stats
+    if (!statStores || !statTransactions || !statItems || !statBestProfit) {
+      return;
+    }
+
     const uniqueStores = new Set(this.filteredData.map(t => t.owner)).size;
     const uniqueItems = new Set(this.filteredData.map(t => t.goodName)).size;
     const bestProfit = Math.max(...this.filteredData.map(t => t.profit), 0);
 
-    document.getElementById('stat-stores').textContent = uniqueStores;
-    document.getElementById('stat-transactions').textContent = this.filteredData.length;
-    document.getElementById('stat-items').textContent = uniqueItems;
-    document.getElementById('stat-best-profit').textContent = this.formatNumber(bestProfit);
+    statStores.textContent = uniqueStores;
+    statTransactions.textContent = this.filteredData.length;
+    statItems.textContent = uniqueItems;
+    statBestProfit.textContent = this.formatNumber(bestProfit);
   }
 
   // Render the current view
   render() {
-    if (this.filteredData.length === 0) {
-      document.getElementById('no-results').classList.remove('hidden');
-      document.getElementById('stores-container').innerHTML = '';
-      document.getElementById('items-container').innerHTML = '';
+    const noResults = document.getElementById('no-results');
+    const storesContainer = document.getElementById('stores-container');
+    const itemsContainer = document.getElementById('items-container');
+
+    // If elements don't exist (e.g., in test environment), skip rendering
+    if (!noResults || !storesContainer || !itemsContainer) {
       return;
     }
 
-    document.getElementById('no-results').classList.add('hidden');
+    if (this.filteredData.length === 0) {
+      noResults.classList.remove('hidden');
+      storesContainer.innerHTML = '';
+      itemsContainer.innerHTML = '';
+      return;
+    }
+
+    noResults.classList.add('hidden');
 
     if (this.currentView === 'stores') {
       this.renderStoreView();
@@ -498,6 +637,7 @@ class SETradeHouse {
   // Render store-based view
   renderStoreView() {
     const container = document.getElementById('stores-container');
+    if (!container) return;
     const storeGroups = this.groupByStore(this.filteredData);
 
     let html = '';
@@ -529,6 +669,7 @@ class SETradeHouse {
   // Render item-based view
   renderItemView() {
     const container = document.getElementById('items-container');
+    if (!container) return;
     const itemGroups = this.groupByItem(this.filteredData);
 
     let html = '';
@@ -605,9 +746,29 @@ class SETradeHouse {
               <span class="value gps-value" title="${this.escapeHtml(transaction.gpsString)}">${this.escapeHtml(transaction.gpsString.substring(0, 50))}${transaction.gpsString.length > 50 ? '...' : ''}</span>
             </div>
             ` : ''}
+            ${this.getUserDistanceHtml(transaction)}
           </div>
           ${profitHtml}
         </div>
+      </div>
+    `;
+  }
+
+  // Get distance from user to transaction location
+  getUserDistanceHtml(transaction) {
+    if (!window.gpsManager || !window.gpsManager.hasGPS()) {
+      return '';
+    }
+
+    const userGPS = window.gpsManager.getGPS();
+    const distance = this.calculateDistance(userGPS, transaction.gps);
+
+    if (distance === 0) return '';
+
+    return `
+      <div class="info-row user-distance-row">
+        <span class="label">Distance from you:</span>
+        <span class="value user-distance">${window.gpsManager.formatDistance(distance)}</span>
       </div>
     `;
   }
@@ -641,44 +802,62 @@ class SETradeHouse {
     this.currentView = view;
 
     // Update tab buttons
-    document.querySelectorAll('.tab-btn').forEach(btn => {
-      btn.classList.toggle('active', btn.dataset.view === view);
-    });
+    const tabBtns = document.querySelectorAll('.tab-btn');
+    if (tabBtns.length > 0) {
+      tabBtns.forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.view === view);
+      });
+    }
 
     // Update view containers
-    document.getElementById('store-view').classList.toggle('active', view === 'stores');
-    document.getElementById('item-view').classList.toggle('active', view === 'items');
+    const storeView = document.getElementById('store-view');
+    const itemView = document.getElementById('item-view');
+    if (storeView) storeView.classList.toggle('active', view === 'stores');
+    if (itemView) itemView.classList.toggle('active', view === 'items');
 
     this.render();
   }
 
   // Update last update timestamp
   updateLastUpdate() {
-    const now = new Date();
-    const timeString = now.toLocaleTimeString();
-    document.getElementById('last-update').textContent = `Last updated: ${timeString}`;
+    const lastUpdate = document.getElementById('last-update');
+    if (lastUpdate) {
+      const now = new Date();
+      const timeString = now.toLocaleTimeString();
+      lastUpdate.textContent = `Last updated: ${timeString}`;
+    }
   }
 
   // UI State Management
   showLoading() {
-    document.getElementById('loading').classList.remove('hidden');
-    document.getElementById('main-content').classList.add('hidden');
+    const loading = document.getElementById('loading');
+    const mainContent = document.getElementById('main-content');
+    if (loading) loading.classList.remove('hidden');
+    if (mainContent) mainContent.classList.add('hidden');
   }
 
   showMainContent() {
-    document.getElementById('loading').classList.add('hidden');
-    document.getElementById('main-content').classList.remove('hidden');
+    const loading = document.getElementById('loading');
+    const mainContent = document.getElementById('main-content');
+    if (loading) loading.classList.add('hidden');
+    if (mainContent) mainContent.classList.remove('hidden');
   }
 
   hideError() {
-    document.getElementById('error').classList.add('hidden');
+    const error = document.getElementById('error');
+    if (error) error.classList.add('hidden');
   }
 
   showError(message) {
-    document.getElementById('loading').classList.add('hidden');
-    document.getElementById('main-content').classList.add('hidden');
-    document.getElementById('error').classList.remove('hidden');
-    document.getElementById('error-message').textContent = message;
+    const loading = document.getElementById('loading');
+    const mainContent = document.getElementById('main-content');
+    const error = document.getElementById('error');
+    const errorMessage = document.getElementById('error-message');
+
+    if (loading) loading.classList.add('hidden');
+    if (mainContent) mainContent.classList.add('hidden');
+    if (error) error.classList.remove('hidden');
+    if (errorMessage) errorMessage.textContent = message;
   }
 
   // Utility Functions

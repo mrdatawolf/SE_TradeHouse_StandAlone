@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Thrust Calculator - SE TradeHouse</title>
+  <link rel="stylesheet" href="../nav.css">
+  <link rel="stylesheet" href="../gpsManager.css">
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    .header {
+      text-align: center;
+      color: white;
+      margin-bottom: 30px;
+    }
+
+    .header h1 {
+      font-size: 36px;
+      margin: 0 0 10px 0;
+    }
+
+    .header p {
+      font-size: 16px;
+      opacity: 0.9;
+    }
+
+    .calculator-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+
+    .card {
+      background: white;
+      border-radius: 10px;
+      padding: 20px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .card h2 {
+      margin: 0 0 20px 0;
+      color: #667eea;
+      font-size: 20px;
+      border-bottom: 2px solid #667eea;
+      padding-bottom: 10px;
+    }
+
+    .form-group {
+      margin-bottom: 15px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: 600;
+      color: #333;
+    }
+
+    .form-group input,
+    .form-group select {
+      width: 90%;
+      padding: 10px;
+      border: 2px solid #e2e8f0;
+      border-radius: 5px;
+      font-size: 14px;
+      transition: border-color 0.3s;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+
+    .form-group input[readonly] {
+      background: #f7fafc;
+      color: #4a5568;
+    }
+
+    .result-value {
+      font-size: 24px;
+      font-weight: bold;
+      color: #667eea;
+      margin: 10px 0;
+    }
+
+    .btn {
+      width: 100%;
+      padding: 12px;
+      background: #667eea;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .btn:hover {
+      background: #5568d3;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+
+    .info-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+    }
+
+    .info-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px;
+      background: #f7fafc;
+      border-radius: 5px;
+    }
+
+    .info-label {
+      color: #718096;
+      font-weight: 500;
+    }
+
+    .info-value {
+      color: #2d3748;
+      font-weight: 700;
+    }
+
+    .highlight-card {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+
+    .highlight-card h2 {
+      color: white;
+      border-bottom-color: rgba(255, 255, 255, 0.3);
+    }
+
+    .highlight-card .result-value {
+      color: white;
+      font-size: 32px;
+    }
+
+    .time-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 10px;
+    }
+
+    .time-item {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 15px;
+      border-radius: 5px;
+      text-align: center;
+    }
+
+    .time-speed {
+      font-size: 18px;
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+
+    .time-value {
+      font-size: 14px;
+      opacity: 0.9;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Thrust Calculator</h1>
+      <p>Calculate thruster requirements for your Space Engineers ship</p>
+    </div>
+
+    <div class="calculator-grid">
+      <!-- Ship Configuration -->
+      <div class="card">
+        <h2>Ship Configuration</h2>
+        <div class="form-group">
+          <label for="grid-size">Grid Size</label>
+          <select id="grid-size">
+            <option value="small_grid">Small Grid</option>
+            <option value="large_grid">Large Grid</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="dry-mass">Ship Dry Mass (kg)</label>
+          <input type="number" id="dry-mass" value="10000" min="0">
+        </div>
+        <div class="form-group">
+          <label for="cargo-mass">Cargo Mass (kg)</label>
+          <input type="number" id="cargo-mass" value="0" min="0">
+        </div>
+        <div class="form-group">
+          <label for="cargo-multiplier">Cargo Multiplier</label>
+          <input type="number" id="cargo-multiplier" value="1" min="0.1" step="0.1">
+        </div>
+      </div>
+
+      <!-- Environment -->
+      <div class="card">
+        <h2>Environment</h2>
+        <div class="form-group">
+          <label for="planet">Planet/Location</label>
+          <select id="planet">
+            <option value="space">Space (0g)</option>
+            <option value="earth" selected>Earth-like (1.0g)</option>
+            <option value="moon">Moon (0.25g)</option>
+            <option value="mars">Mars-like (0.9g)</option>
+            <option value="alien">Alien (1.1g)</option>
+            <option value="titan">Titan (0.26g)</option>
+            <option value="europa">Europa (0.25g)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="gravity">Gravity (g)</label>
+          <input type="number" id="gravity" value="1.0" step="0.1" readonly>
+        </div>
+        <div class="form-group">
+          <label for="atmosphere">Atmosphere Density</label>
+          <input type="number" id="atmosphere" value="1.0" step="0.1" min="0" max="1" readonly>
+        </div>
+      </div>
+
+      <!-- Thruster Selection -->
+      <div class="card">
+        <h2>Thruster Type</h2>
+        <div class="form-group">
+          <label for="thruster-type">Type</label>
+          <select id="thruster-type">
+            <option value="ion">Ion Thruster</option>
+            <option value="atmospheric">Atmospheric Thruster</option>
+            <option value="hydrogen">Hydrogen Thruster</option>
+            <option value="plasma">Plasma Thruster</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="thruster-size">Size</label>
+          <select id="thruster-size">
+            <option value="small">Small</option>
+            <option value="large">Large</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Calculated Requirements -->
+      <div class="card highlight-card">
+        <h2>Required Thrusters</h2>
+        <div class="result-value" id="thrusters-required">0</div>
+        <p>thrusters needed to overcome gravity</p>
+      </div>
+
+      <!-- Additional Thrusters -->
+      <div class="card">
+        <h2>Additional Ion Thrusters</h2>
+        <div class="form-group">
+          <label for="add-small-ion">Small</label>
+          <input type="number" id="add-small-ion" value="0" min="0">
+        </div>
+        <div class="form-group">
+          <label for="add-large-ion">Large</label>
+          <input type="number" id="add-large-ion" value="0" min="0">
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Additional Atmospheric Thrusters</h2>
+        <div class="form-group">
+          <label for="add-small-atmo">Small</label>
+          <input type="number" id="add-small-atmo" value="0" min="0">
+        </div>
+        <div class="form-group">
+          <label for="add-large-atmo">Large</label>
+          <input type="number" id="add-large-atmo" value="0" min="0">
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Additional Hydrogen Thrusters</h2>
+        <div class="form-group">
+          <label for="add-small-h2">Small</label>
+          <input type="number" id="add-small-h2" value="0" min="0">
+        </div>
+        <div class="form-group">
+          <label for="add-large-h2">Large</label>
+          <input type="number" id="add-large-h2" value="0" min="0">
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Additional Plasma Thrusters</h2>
+        <div class="form-group">
+          <label for="add-small-plasma">Small</label>
+          <input type="number" id="add-small-plasma" value="0" min="0">
+        </div>
+        <div class="form-group">
+          <label for="add-large-plasma">Large</label>
+          <input type="number" id="add-large-plasma" value="0" min="0">
+        </div>
+      </div>
+
+      <!-- General Info -->
+      <div class="card">
+        <h2>General Information</h2>
+        <div class="info-grid">
+          <div class="info-item">
+            <span class="info-label">Total Mass:</span>
+            <span class="info-value" id="total-mass">0 kg</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Newtons Required:</span>
+            <span class="info-value" id="newtons-required">0 N</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Total Applied:</span>
+            <span class="info-value" id="newtons-applied">0 N</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Acceleration:</span>
+            <span class="info-value" id="acceleration">0 m/s²</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Power Requirements -->
+      <div class="card">
+        <h2>Power Requirements</h2>
+        <div class="info-grid">
+          <div class="info-item">
+            <span class="info-label">Total Power:</span>
+            <span class="info-value" id="total-power">0 MW</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Large Reactors:</span>
+            <span class="info-value" id="large-reactors">0</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Small Reactors:</span>
+            <span class="info-value" id="small-reactors">0</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Naquadah Reactors:</span>
+            <span class="info-value" id="naquadah-reactors">0</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Time to Speed -->
+    <div class="card highlight-card">
+      <h2>Time to Reach Speed</h2>
+      <div class="time-grid">
+        <div class="time-item">
+          <div class="time-speed">10 m/s</div>
+          <div class="time-value" id="time-10">0.0s</div>
+        </div>
+        <div class="time-item">
+          <div class="time-speed">25 m/s</div>
+          <div class="time-value" id="time-25">0.0s</div>
+        </div>
+        <div class="time-item">
+          <div class="time-speed">50 m/s</div>
+          <div class="time-value" id="time-50">0.0s</div>
+        </div>
+        <div class="time-item">
+          <div class="time-speed">100 m/s</div>
+          <div class="time-value" id="time-100">0.0s</div>
+        </div>
+        <div class="time-item">
+          <div class="time-speed">150 m/s</div>
+          <div class="time-value" id="time-150">0.0s</div>
+        </div>
+        <div class="time-item">
+          <div class="time-speed">250 m/s</div>
+          <div class="time-value" id="time-250">0.0s</div>
+        </div>
+        <div class="time-item">
+          <div class="time-speed">500 m/s</div>
+          <div class="time-value" id="time-500">0.0s</div>
+        </div>
+        <div class="time-item">
+          <div class="time-speed">1000 m/s</div>
+          <div class="time-value" id="time-1000">0.0s</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../gpsManager.js"></script>
+  <script src="../nav.js"></script>
+  <script src="thrusterData.js"></script>
+  <script src="thrustCalculator.js"></script>
+</body>
+</html>

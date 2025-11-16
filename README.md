@@ -1,10 +1,10 @@
 # SE TradeHouse - Standalone Edition
 
-**Live Demo:** [Your GitHub Pages URL will go here]
+**Live Demo:** https://mrdatawolf.github.io/SE_TradeHouse_StandAlone/
 
-A lightweight, standalone web application for tracking and analyzing Space Engineers trade data. No backend required - just pure JavaScript reading from a public Google Sheet.
+A complete standalone web application for Space Engineers - trade data analysis, system maps, and ship calculators. No backend required - pure JavaScript with Google Sheets integration.
 
-![Version](https://img.shields.io/badge/version-1.0.0-blue)
+![Version](https://img.shields.io/badge/version-2.0.0-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![No API Key Required](https://img.shields.io/badge/API%20Key-Not%20Required-brightgreen)
 
@@ -12,33 +12,36 @@ A lightweight, standalone web application for tracking and analyzing Space Engin
 
 ## 🚀 Features
 
-### 💰 Profit Calculator
+### 💰 Trade Data & Profit Calculator
 - Automatically finds profit opportunities between trading stations
-- Shows where to buy low and sell high
-- Calculates profit per unit and total profit
-- Displays distance between stations
-
-### 🔍 Advanced Filtering
-- Filter by good type (Ore, Ingot, Component, Tool, Ammo, Bottle)
+- Full Space Engineers item parsing (`MyObjectBuilder_` format)
+- Advanced filtering (Ore, Ingot, Component, Tool, Ammo, Bottle, Consumable)
 - Show only buy orders, sell offers, or profitable trades
 - Search by item name, owner, or station
 - Sort by profit, price, quantity, or name
+- Store View and Item View modes
+- Real-time statistics dashboard
 
-### 📊 Two View Modes
-- **Store View**: See all transactions grouped by owner/station
-- **Item View**: See all transactions grouped by item type
+### 🗺️ System Maps
+- **2D Map**: Interactive CSS-based solar system with animated orbits
+- **3D Map**: Full Three.js 3D visualization with orbit controls
+- Click planets for detailed information
+- Accurate GPS coordinate positioning
+- Star glow effects and realistic rendering
 
-### 📈 Real-Time Statistics
-- Total stores
-- Active transactions
-- Unique items tracked
-- Best profit opportunity
+### 🧮 Thrust Calculator
+- Calculate thruster requirements for any ship
+- Supports all thruster types: Ion, Atmospheric, Hydrogen, Plasma
+- Small and Large grid support
+- Planet gravity and atmosphere effects
+- Additional thruster configuration
+- Power reactor calculations (Small, Large, Naquadah)
+- Time-to-speed calculations
 
-### 🎨 Modern UI
-- Responsive design (works on mobile)
-- Color-coded transactions (buy orders in green, sell offers in blue)
-- Profitable trades highlighted
-- Clean, professional interface
+### 🧪 Test Suites
+- **Parsing Tests**: Verify MyObjectBuilder format parsing
+- **Unit Tests**: 60+ tests with beautiful GUI test runner
+- All filtering, sorting, and profit calculation tests
 
 ---
 
