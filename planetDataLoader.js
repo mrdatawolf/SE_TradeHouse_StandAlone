@@ -34,33 +34,51 @@ class PlanetDataLoader {
     const lines = csvData.split('\n');
     this.planets = [];
 
+    console.log(`Parsing CSV with ${lines.length} lines`);
+
     // Skip header row, start from index 1
     for (let i = 1; i < lines.length; i++) {
       const line = lines[i].trim();
       if (!line) continue;
 
       const columns = this.parseCSVLine(line);
-      if (columns.length < 5) continue;
+
+      // Debug log for lines that might be skipped
+      if (columns.length < 5) {
+        console.log(`Row ${i + 1} skipped - only ${columns.length} columns:`, columns);
+        continue;
+      }
 
       const name = columns[0].trim();
-      const x = parseFloat(columns[1]) || 0;
-      const y = parseFloat(columns[2]) || 0;
-      const z = parseFloat(columns[3]) || 0;
-      const gravity = parseFloat(columns[4]) || 1.0;
+      const x = parseFloat(columns[1]);
+      const y = parseFloat(columns[2]);
+      const z = parseFloat(columns[3]);
+      const gravity = parseFloat(columns[4]);
 
-      if (name) {
-        this.planets.push({
-          name: name,
-          x: x,
-          y: y,
-          z: z,
-          gravity: gravity,
-          hasAtmosphere: gravity > 0 // Assume planets with gravity have atmosphere
-        });
+      // Check for valid data (NaN check)
+      if (!name) {
+        console.log(`Row ${i + 1} skipped - empty name`);
+        continue;
       }
+
+      if (isNaN(x) || isNaN(y) || isNaN(z)) {
+        console.log(`Row ${i + 1} "${name}" skipped - invalid coordinates: x=${columns[1]}, y=${columns[2]}, z=${columns[3]}`);
+        continue;
+      }
+
+      this.planets.push({
+        name: name,
+        x: x,
+        y: y,
+        z: z,
+        gravity: isNaN(gravity) ? 1.0 : gravity,
+        hasAtmosphere: !isNaN(gravity) && gravity > 0
+      });
+
+      console.log(`Row ${i + 1} parsed: ${name} at (${x}, ${y}, ${z}) with ${gravity}g`);
     }
 
-    console.log(`Loaded ${this.planets.length} planets from server data`);
+    console.log(`✓ Loaded ${this.planets.length} planets from server data`);
   }
 
   // Parse CSV line handling quoted fields

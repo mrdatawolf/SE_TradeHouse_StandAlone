@@ -9,7 +9,7 @@ const CONFIG = {
 
   // Planets Sheet GID (Sheet 4 - contains planet data: Name, X, Y, Z, Gravity)
   // You can find this by going to Sheet 4 and looking at the URL: gid=XXXXXXX
-  PLANETS_SHEET_GID: '3', // Default, may need to be updated
+  PLANETS_SHEET_GID: '1015007341',
 
   // Access mode: 'csv' (no API key needed) or 'api' (requires API key below)
   ACCESS_MODE: 'csv',

@@ -10,6 +10,7 @@
     body {
       margin: 0;
       padding: 0;
+      padding-top: 80px; /* Space for navigation bar */
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       background: #0a0a0a;
       color: white;
@@ -143,6 +144,7 @@
     <h1>Nebulon System - 3D Map</h1>
     <p>Interactive 3D representation of the Nebulon planetary system</p>
     <p style="font-size: 14px; color: #888;">Drag to rotate • Scroll to zoom • Click planets for information</p>
+    <p id="planet-count" style="color: #667eea; font-size: 14px; margin-top: 10px;">Loading planets...</p>
   </div>
 
   <div id="loading">
@@ -210,7 +212,8 @@
 
     // Load planets from server data
     async function loadPlanets() {
-      const colors = [0x7372ae, 0xf69d61, 0xe74c3c, 0x3498db, 0x9b59b6, 0x1abc9c, 0xf39c12, 0x8c773f, 0xaaaaaa, 0x6b8e23];
+      const colors = [0x7372ae, 0xf69d61, 0xe74c3c, 0x3498db, 0x9b59b6, 0x1abc9c, 0xf39c12, 0x8c773f, 0xaaaaaa, 0x6b8e23, 0xe67e22, 0x16a085];
+      const planetCountEl = document.getElementById('planet-count');
 
       if (window.planetDataLoader) {
         await window.planetDataLoader.loadPlanetData();
@@ -225,9 +228,26 @@
               type: 'Planet',
               color: colors[index % colors.length],
               size: planetSize,
-              gps: { x: planet.x, y: planet.y, z: planet.z }
+              gps: { x: planet.x, y: planet.y, z: planet.z },
+              gravity: planet.gravity
             };
           });
+
+          // Update planet count
+          if (planetCountEl) {
+            planetCountEl.textContent = `Loaded ${planets.length} planets from server`;
+            planetCountEl.style.color = '#48bb78';
+          }
+        } else {
+          if (planetCountEl) {
+            planetCountEl.textContent = 'Failed to load planet data';
+            planetCountEl.style.color = '#e74c3c';
+          }
+        }
+      } else {
+        if (planetCountEl) {
+          planetCountEl.textContent = 'Planet data loader not available';
+          planetCountEl.style.color = '#e74c3c';
         }
       }
     }

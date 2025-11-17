@@ -58,6 +58,14 @@
       </div>
 
       <div class="control-group">
+        <label for="planet-filter">Near Planet:</label>
+        <select id="planet-filter" class="filter-select">
+          <option value="all">All Locations</option>
+          <!-- Planets will be dynamically loaded -->
+        </select>
+      </div>
+
+      <div class="control-group">
         <label for="sort-select">Sort By:</label>
         <select id="sort-select" class="filter-select">
           <option value="profit">Best Profit</option>
@@ -139,9 +147,10 @@
   </div>
 
   <!-- Scripts -->
+  <script src="config.js"></script>
+  <script src="planetDataLoader.js"></script>
   <script src="gpsManager.js"></script>
   <script src="nav.js"></script>
-  <script src="config.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
