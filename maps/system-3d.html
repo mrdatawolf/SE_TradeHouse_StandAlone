@@ -184,6 +184,8 @@
     </div>
   </div>
 
+  <script src="../config.js"></script>
+  <script src="../planetDataLoader.js"></script>
   <script src="../gpsManager.js"></script>
   <script src="../nav.js"></script>
   <script type="importmap">
@@ -204,58 +206,31 @@
     const planetSize = 8;
     const moonSize = 3;
 
-    const planetData = {
-      earth: {
-        name: 'Earth',
-        type: 'Habitable Planet',
-        color: 0x7372ae,
-        size: planetSize,
-        position: { x: 0, y: 0, z: 0 }
-      },
-      moon: {
-        name: 'Moon',
-        type: 'Natural Satellite',
-        color: 0xaaaaaa,
-        size: moonSize,
-        gps: { x: 16384, y: 136384, z: -113616 },
-        parent: 'earth'
-      },
-      mars: {
-        name: 'Mars',
-        type: 'Rocky Planet',
-        color: 0x8c773f,
-        size: planetSize,
-        gps: { x: 1031072, y: 131072, z: 1631072 }
-      },
-      europa: {
-        name: 'Europa',
-        type: 'Ice Moon',
-        color: 0x9db4c0,
-        size: moonSize,
-        gps: { x: 916384, y: 16384, z: 1616384 }
-      },
-      alien: {
-        name: 'Alien World',
-        type: 'Unknown',
-        color: 0x6b8e23,
-        size: planetSize,
-        gps: { x: 131072, y: 131072, z: 5731072 }
-      },
-      titan: {
-        name: 'Titan',
-        type: 'Gas Giant Moon',
-        color: 0xc2956e,
-        size: moonSize,
-        gps: { x: 36384, y: 226384, z: 5796384 }
-      },
-      nebulon: {
-        name: 'Nebulon Star',
-        type: 'Star',
-        color: 0xf86b23,
-        size: starSize,
-        position: { x: 0, y: 0, z: 400 }
+    let planetData = {};
+
+    // Load planets from server data
+    async function loadPlanets() {
+      const colors = [0x7372ae, 0xf69d61, 0xe74c3c, 0x3498db, 0x9b59b6, 0x1abc9c, 0xf39c12, 0x8c773f, 0xaaaaaa, 0x6b8e23];
+
+      if (window.planetDataLoader) {
+        await window.planetDataLoader.loadPlanetData();
+
+        if (window.planetDataLoader.isLoaded()) {
+          const planets = window.planetDataLoader.getPlanets();
+
+          planets.forEach((planet, index) => {
+            const key = planet.name.toLowerCase().replace(/\s+/g, '_');
+            planetData[key] = {
+              name: planet.name,
+              type: 'Planet',
+              color: colors[index % colors.length],
+              size: planetSize,
+              gps: { x: planet.x, y: planet.y, z: planet.z }
+            };
+          });
+        }
       }
-    };
+    }
 
     // Convert GPS to scene position
     function gpsToPosition(gps) {
@@ -266,11 +241,13 @@
       };
     }
 
-    // Calculate positions
-    for (const key in planetData) {
-      const planet = planetData[key];
-      if (planet.gps && !planet.position) {
-        planet.position = gpsToPosition(planet.gps);
+    // Calculate positions for planets
+    function calculatePlanetPositions() {
+      for (const key in planetData) {
+        const planet = planetData[key];
+        if (planet.gps && !planet.position) {
+          planet.position = gpsToPosition(planet.gps);
+        }
       }
     }
 
@@ -280,8 +257,15 @@
     let selectedPlanet = null;
     let userMarker = null;
 
-    init();
-    animate();
+    // Main initialization
+    async function main() {
+      await loadPlanets();
+      calculatePlanetPositions();
+      init();
+      animate();
+    }
+
+    main();
 
     function init() {
       container = document.getElementById('canvas-container');
