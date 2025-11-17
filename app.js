@@ -10,16 +10,39 @@ class SETradeHouse {
       search: '',
       goodType: 'all',
       transactionType: 'all',
-      sortBy: 'profit'
+      sortBy: 'profit',
+      nearPlanet: 'all'
     };
 
     this.init();
   }
 
   // Initialize the application
-  init() {
+  async init() {
+    // Load planet data first
+    if (window.planetDataLoader) {
+      await window.planetDataLoader.loadPlanetData();
+      this.populatePlanetFilter();
+    }
+
     this.bindEvents();
     this.loadData();
+  }
+
+  // Populate planet filter dropdown
+  populatePlanetFilter() {
+    const planetFilter = document.getElementById('planet-filter');
+    if (!planetFilter) return;
+
+    if (window.planetDataLoader && window.planetDataLoader.isLoaded()) {
+      const planets = window.planetDataLoader.getPlanets();
+      planets.forEach(planet => {
+        const option = document.createElement('option');
+        option.value = planet.name.toLowerCase();
+        option.textContent = `${planet.name} (100km)`;
+        planetFilter.appendChild(option);
+      });
+    }
   }
 
   // Bind UI event listeners
@@ -76,6 +99,15 @@ class SETradeHouse {
     if (transactionFilter) {
       transactionFilter.addEventListener('change', (e) => {
         this.filters.transactionType = e.target.value;
+        this.applyFiltersAndRender();
+      });
+    }
+
+    // Planet proximity filter
+    const planetFilter = document.getElementById('planet-filter');
+    if (planetFilter) {
+      planetFilter.addEventListener('change', (e) => {
+        this.filters.nearPlanet = e.target.value;
         this.applyFiltersAndRender();
       });
     }
@@ -547,6 +579,18 @@ class SETradeHouse {
       filtered = filtered.filter(t => t.transactionType === 'offer');
     } else if (this.filters.transactionType === 'profitable') {
       filtered = filtered.filter(t => t.profit > 0);
+    }
+
+    // Apply planet proximity filter (within 100km)
+    if (this.filters.nearPlanet !== 'all' && window.planetDataLoader && window.planetDataLoader.isLoaded()) {
+      const planet = window.planetDataLoader.getPlanet(this.filters.nearPlanet);
+      if (planet) {
+        const maxDistance = 100000; // 100km in meters
+        filtered = filtered.filter(t => {
+          const distance = this.calculateDistance(planet, t.gps);
+          return distance <= maxDistance;
+        });
+      }
     }
 
     // Apply sorting
