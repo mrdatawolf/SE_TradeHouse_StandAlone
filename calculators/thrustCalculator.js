@@ -22,9 +22,56 @@ class ThrustCalculator {
     this.init();
   }
 
-  init() {
+  async init() {
+    // Load planet data from server
+    if (window.planetDataLoader) {
+      await window.planetDataLoader.loadPlanetData();
+      this.populatePlanetDropdown();
+    }
+
     this.bindEvents();
     this.calculate();
+  }
+
+  populatePlanetDropdown() {
+    const planetSelect = document.getElementById('planet');
+    if (!planetSelect) return;
+
+    // Clear existing options except "Space"
+    planetSelect.innerHTML = '<option value="space">Space (0g)</option>';
+
+    // Add server planets if loaded
+    if (window.planetDataLoader && window.planetDataLoader.isLoaded()) {
+      const planets = window.planetDataLoader.getPlanets();
+      planets.forEach(planet => {
+        const option = document.createElement('option');
+        option.value = planet.name.toLowerCase();
+        option.textContent = `${planet.name} (${planet.gravity}g)`;
+        planetSelect.appendChild(option);
+      });
+    }
+
+    // Add fallback hardcoded planets as secondary options
+    const hardcodedPlanets = Object.keys(PLANET_DATA);
+    hardcodedPlanets.forEach(key => {
+      if (key === 'space') return; // Already added
+      const planet = PLANET_DATA[key];
+      // Check if this planet name is already in server data
+      const alreadyExists = window.planetDataLoader && window.planetDataLoader.getPlanet(planet.name);
+      if (!alreadyExists) {
+        const option = document.createElement('option');
+        option.value = key;
+        option.textContent = `${planet.name} (${planet.gravity}g)`;
+        planetSelect.appendChild(option);
+      }
+    });
+
+    // Select first real planet (not space) by default
+    if (planetSelect.options.length > 1) {
+      planetSelect.selectedIndex = 1;
+      // Trigger change event to update gravity/atmosphere
+      planetSelect.dispatchEvent(new Event('change'));
+    }
   }
 
   bindEvents() {
@@ -52,12 +99,29 @@ class ThrustCalculator {
     // Environment
     document.getElementById('planet').addEventListener('change', (e) => {
       this.planet = e.target.value;
+
+      // First, check if it's a loaded planet from server data
+      if (window.planetDataLoader && window.planetDataLoader.isLoaded()) {
+        const serverPlanet = window.planetDataLoader.getPlanet(this.planet);
+        if (serverPlanet) {
+          this.gravity = serverPlanet.gravity;
+          this.atmosphere = serverPlanet.hasAtmosphere ? 1.0 : 0.0;
+          document.getElementById('gravity').value = this.gravity;
+          document.getElementById('atmosphere').value = this.atmosphere;
+          this.calculate();
+          return;
+        }
+      }
+
+      // Fallback to hardcoded planet data
       const planetData = PLANET_DATA[this.planet];
-      this.gravity = planetData.gravity;
-      this.atmosphere = planetData.atmosphereDensity;
-      document.getElementById('gravity').value = this.gravity;
-      document.getElementById('atmosphere').value = this.atmosphere;
-      this.calculate();
+      if (planetData) {
+        this.gravity = planetData.gravity;
+        this.atmosphere = planetData.atmosphereDensity;
+        document.getElementById('gravity').value = this.gravity;
+        document.getElementById('atmosphere').value = this.atmosphere;
+        this.calculate();
+      }
     });
 
     // Thruster selection
