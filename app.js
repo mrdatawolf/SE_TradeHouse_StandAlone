@@ -918,5 +918,6 @@ class SETradeHouse {
 
 // Initialize app when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
-  window.tradeHouse = new SETradeHouse();
+  window.seTradeHouseApp = new SETradeHouse();
+  window.tradeHouse = window.seTradeHouseApp; // Backwards compatibility
 });
