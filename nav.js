@@ -6,6 +6,10 @@ class Navigation {
 
     this.links = [
       { name: 'Home', path: 'index.html', icon: '🏠' },
+      { name: 'Trading', path: '#', icon: '💰', children: [
+        { name: 'All Trades', path: 'index.html' },
+        { name: 'Trade Opportunities', path: 'trade-opportunities.html' }
+      ]},
       { name: 'Maps', path: '#', icon: '🗺️', children: [
         { name: '2D System Map', path: 'maps/system-2d.html' },
         { name: '3D System Map', path: 'maps/system-3d.html' }
